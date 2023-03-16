@@ -3,6 +3,7 @@ import platform
 import socket
 import subprocess
 import sys
+import speedtest
 
 def get_system_info():
     # Get system information
@@ -35,25 +36,36 @@ def get_system_info():
     except:
         pass
 
+
+
 def get_network_info():
     # Get network information
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     print("Hostname:", hostname)
     print("IP Address:", IPAddr)
-    
-    # Check network speed
-    try:
-        speedtest = subprocess.check_output(["speedtest-cli", "--simple"], universal_newlines=True)
-        for line in speedtest.split("\n"):
-            if "Ping:" in line:
-                print(line.strip())
-            elif "Download:" in line:
-                print(line.strip())
-            elif "Upload:" in line:
-                print(line.strip())
-    except:
-        pass
+
+    # Run speed test
+    st = speedtest.Speedtest()
+    st.get_best_server()
+
+    # Print network stats
+    download_speed = round(st.download() / 1e6, 2)
+    upload_speed = round(st.upload() / 1e6, 2)
+    results_dict = st.results.dict()
+    ping = round(results_dict['ping'], 2)
+    jitter = round(results_dict['jitter'], 2)
+    latency_avg = round(results_dict['server']['latency'], 2)
+    latency_min = round(results_dict['server']['latency_min'], 2)
+    latency_max = round(results_dict['server']['latency_max'], 2)
+
+    print("Download Speed:", download_speed, "Mbps")
+    print("Upload Speed:", upload_speed, "Mbps")
+    print("Ping:", ping, "ms")
+    print("Jitter:", jitter, "ms")
+    print("Latency (avg):", latency_avg, "ms")
+    print("Latency (min):", latency_min, "ms")
+    print("Latency (max):", latency_max, "ms")
 
 def get_cpu_info():
     # Get CPU information
@@ -103,3 +115,4 @@ def eva():
 
 if __name__ == "__main__":
     eva()
+
