@@ -1,6 +1,7 @@
 import psutil
 import platform
 import socket
+import subprocess
 import sys
 
 def get_system_info():
@@ -12,6 +13,27 @@ def get_system_info():
     print(f"Version: {uname.version}")
     print(f"Machine: {uname.machine}")
     print(f"Processor: {uname.processor}")
+    
+    # Get CPU information
+    brand = None
+    with open("/proc/cpuinfo", "r") as f:
+        for line in f:
+            if "vendor_id" in line:
+                if "GenuineIntel" in line:
+                    brand = "Intel"
+                elif "AuthenticAMD" in line:
+                    brand = "AMD"
+                break
+    if brand:
+        print("CPU Brand:", brand)
+        
+    # Get GPU information
+    try:
+        lspci = subprocess.check_output(["lspci"], universal_newlines=True)
+        if "VGA compatible controller" in lspci:
+            print("GPU Support: Yes")
+    except:
+        pass
 
 def get_network_info():
     # Get network information
@@ -19,6 +41,19 @@ def get_network_info():
     IPAddr = socket.gethostbyname(hostname)
     print("Hostname:", hostname)
     print("IP Address:", IPAddr)
+    
+    # Check network speed
+    try:
+        speedtest = subprocess.check_output(["speedtest-cli", "--simple"], universal_newlines=True)
+        for line in speedtest.split("\n"):
+            if "Ping:" in line:
+                print(line.strip())
+            elif "Download:" in line:
+                print(line.strip())
+            elif "Upload:" in line:
+                print(line.strip())
+    except:
+        pass
 
 def get_cpu_info():
     # Get CPU information
