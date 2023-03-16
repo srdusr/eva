@@ -36,36 +36,36 @@ def get_system_info():
     except:
         pass
 
-
-
 def get_network_info():
     # Get network information
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     print("Hostname:", hostname)
     print("IP Address:", IPAddr)
-
-    # Run speed test
+    
+    # Get network speed
     st = speedtest.Speedtest()
-    st.get_best_server()
+    latency = st.results.ping
+    download = st.download() / (1024*1024)
+    upload = st.upload() / (1024*1024)
+    print("Latency:", latency, "ms")
+    print("Download:", download, "Mbps")
+    print("Upload:", upload, "Mbps")
+    
+    # Get network jitter
+    server = st.get_best_server()
+    jitter = st.results.ping - server["latency"] if server else None
 
-    # Print network stats
-    download_speed = round(st.download() / 1e6, 2)
-    upload_speed = round(st.upload() / 1e6, 2)
-    results_dict = st.results.dict()
-    ping = round(results_dict['ping'], 2)
-    jitter = round(results_dict['jitter'], 2)
-    latency_avg = round(results_dict['server']['latency'], 2)
-    latency_min = round(results_dict['server']['latency_min'], 2)
-    latency_max = round(results_dict['server']['latency_max'], 2)
-
-    print("Download Speed:", download_speed, "Mbps")
-    print("Upload Speed:", upload_speed, "Mbps")
-    print("Ping:", ping, "ms")
     print("Jitter:", jitter, "ms")
-    print("Latency (avg):", latency_avg, "ms")
-    print("Latency (min):", latency_min, "ms")
-    print("Latency (max):", latency_max, "ms")
+    
+    # Get network stats
+    st.get_servers()
+    st.get_best_server()
+    stats = st.results.dict()
+    print("Network Stats:")
+    print("  - Average:", stats["ping"], "ms")
+    print("  - Minimum:", stats["ping"]["min"], "ms")
+    print("  - Maximum:", stats["ping"]["max"], "ms")
 
 def get_cpu_info():
     # Get CPU information
