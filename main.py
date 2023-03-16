@@ -3,7 +3,6 @@ import platform
 import socket
 import subprocess
 import sys
-import speedtest
 
 def get_system_info():
     # Get system information
@@ -36,36 +35,44 @@ def get_system_info():
     except:
         pass
 
+import subprocess
+
 def get_network_info():
     # Get network information
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     print("Hostname:", hostname)
     print("IP Address:", IPAddr)
-    
-    # Get network speed
-    st = speedtest.Speedtest()
-    latency = st.results.ping
-    download = st.download() / (1024*1024)
-    upload = st.upload() / (1024*1024)
-    print("Latency:", latency, "ms")
-    print("Download:", download, "Mbps")
-    print("Upload:", upload, "Mbps")
-    
-    # Get network jitter
-    server = st.get_best_server()
-    jitter = st.results.ping - server["latency"] if server else None
 
-    print("Jitter:", jitter, "ms")
-    
-    # Get network stats
-    st.get_servers()
-    st.get_best_server()
-    stats = st.results.dict()
-    print("Network Stats:")
-    print("  - Average:", stats["ping"], "ms")
-    print("  - Minimum:", stats["ping"]["min"], "ms")
-    print("  - Maximum:", stats["ping"]["max"], "ms")
+    # Measure latency with ping
+    try:
+        ping_output = subprocess.check_output(["ping", "-c", "10", "-i", "0.2", "google.com"], universal_newlines=True)
+        ping_lines = ping_output.strip().split("\n")
+        rtt_lines = [line for line in ping_lines if "rtt min/avg/max/mdev" in line]
+        if len(rtt_lines) > 0:
+            rtt_parts = rtt_lines[0].split("=")[1].split("/")
+            min_rtt, avg_rtt, max_rtt, mdev_rtt = rtt_parts
+            print(f"Min RTT: {min_rtt} ms")
+            print(f"Avg RTT: {avg_rtt} ms")
+            print(f"Max RTT: {max_rtt} ms")
+            print(f"Mdev RTT: {mdev_rtt} ms")
+    except:
+        pass
+
+    # Measure bandwidth with curl
+    try:
+        curl_output = subprocess.check_output(["curl", "-s", "https://speed.cloudflare.com/__down"], universal_newlines=True)
+        curl_lines = curl_output.strip().split("\n")
+        speed_lines = [line for line in curl_lines if "Your download speed is" in line and "Your upload speed is" in line]
+        if len(speed_lines) > 0:
+            download_speed_parts = speed_lines[0].split("Your download speed is ")[1].split(" ")[0].split(".")
+            download_speed = float(download_speed_parts[0]) if len(download_speed_parts) == 1 else float(download_speed_parts[0] + "." + download_speed_parts[1])
+            upload_speed_parts = speed_lines[0].split("Your upload speed is ")[1].split(" ")[0].split(".")
+            upload_speed = float(upload_speed_parts[0]) if len(upload_speed_parts) == 1 else float(upload_speed_parts[0] + "." + upload_speed_parts[1])
+            print(f"Download speed: {download_speed:.2f} Mbps")
+            print(f"Upload speed: {upload_speed:.2f} Mbps")
+    except:
+        pass
 
 def get_cpu_info():
     # Get CPU information
